@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body onload="docReady()">
+<input type="button" onclick="reset()" value="RESET">
+<input type="button" onclick="play()" value="PLAY">
+
+<form style="position: absolute; left: 180px" width="350" height="500">
+    <fieldset>
+        <legend><h1>Asphalt8: Airborne =)))</h1></legend>
+        <p>Score</p>
+        <span id="score"></span>
+        <br><br>
+
+        <h1>You</h1>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <img id="car" width="60" height="150" src="car.png" alt="The Car">
+        <h1>Your Competitors</h1>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <img id="carElse" width="60" height="150" src="carElse.png" alt="The CarElse">
+        <img id="bullet" width="60" height="150" src="bullet.jpg" alt="The Bullet">
+    </fieldset>
+</form>
+<canvas id="myCanvas" width="600" height="900" style="border:1px solid #d3d3d3; position: absolute; left: 600px;"></canvas>
+
+<script>
+    let canvas=document.getElementById("myCanvas");
+    let ctx=canvas.getContext("2d");
+    let img = document.getElementById("car");
+    let imgElse = document.getElementById("carElse");
+    let imgBullet=document.getElementById("bullet");
+    let arrBullet=[];
+
+    let Car = function(x,y,height,width,vx,vy) {
+        this.x=x;
+        this.y=y;
+        this.width=width;
+        this.height=height;
+        this.vx=vx;
+        this.vy=vy;
+        this.direction= "Up";
+
+        this.getCarElement = function(){
+            ctx.drawImage(img,this.x,this.y,this.width,this.height);
+        };
+
+        this.getDirection=function () {
+            switch (this.direction) {
+                // case "Up":
+                //     this.getMoveUp();
+                //     break;
+                // case "Down":
+                //     this.getMoveDown();
+                //     break;
+                case "Right":
+                    this.getMoveRight();
+                    break;
+                case "Left":
+                    this.getMoveLeft();
+                    break;
+            }
+        };
+
+        this.getMoveRight=function () {
+            if(this.x<=canvas.width-this.width)
+                this.x+=vx;
+        };
+        this.getMoveLeft=function () {
+            if(this.x>=0)
+                this.x-=vx;
+        };
+        // this.getMoveUp=function () {
+        //     if(this.y>=0)
+        //         this.y-=vy;
+        // };
+        // this.getMoveDown=function () {
+        //     if(this.y<=canvas.height-this.height)
+        //         this.y+=vy;
+        //   };
+
+        this.createBullet=function () {
+            let bullet= new Bullet(this.x, this.y,60,20,6);
+            arrBullet.push(bullet);
+            this.fire(bullet);
+        };
+
+        this.fire=function (bullet) {
+            setInterval(function () {
+                bullet.getBullet();
+                bullet.moveBullet();
+            })
+        }
+
+    };
+    let CarElse=function(x,y,height,width,speed){
+        this.x=x;
+        this.y=y;
+        this.height=height;
+        this.width=width;
+        this.speed=speed;
+
+        this.getCarElseElement = function(){
+            ctx.drawImage(imgElse,this.x,this.y,this.width,this.height);
+        };
+        this.moveCarElse=function () {
+            this.y+=this.speed;
+        };
+    };
+
+    let Bullet=function(x,y,height,width,speed){
+        this.x=x;
+        this.y=y;
+        this.height=height;
+        this.width=width;
+        this.speed=speed;
+
+        this.getBullet=function () {
+            ctx.drawImage(imgBullet,this.x,this.y,this.width,this.height);
+        };
+        this.moveBullet=function () {
+            this.y-=this.speed;
+        };
+    };
+
+    let car= new Car(270,740,150,60,3,3);
+    console.log(car);
+
+    let arrCarElse=[];
+    let x=[];
+    let count=0;
+    let point=0;
+    let start;
+    let i=0;
+    let makeCarElse;
+
+
+    let createCarElse=function(){
+        makeCarElse= setInterval(function () {
+            x[i] = Math.round(Math.random() * 540);
+            let carElse = new CarElse(x[i],0,150,60,3);
+            arrCarElse.push(carElse);
+        }, 2000);
+    };
+
+    let Game = function () {
+        this.challenges = function () {
+            for (let i = 0; i < arrCarElse.length; i++) {
+                arrCarElse[i].getCarElseElement();
+                arrCarElse[i].moveCarElse();
+            }
+        };
+
+        this.deleteCarElse=function(arrCarElse, arrBullet){
+            for (let i=0; i<arrCarElse.length; i++) {
+                if (arrCarElse[i].y > canvas.height) {
+                    arrCarElse.splice(i,1);
+                    count+=10;
+                }
+            }
+            for (let i=0; i<arrCarElse.length; i++){
+                for(let j=0; j<arrBullet.length; j++){
+                    if(arrBullet[j].x < arrCarElse[i].x + 60 && arrBullet[j].y < arrCarElse[i].y + 150 &&
+                        arrBullet[j].x > arrCarElse[i].x - 60 && arrBullet[j].y > arrCarElse[i].y - 150){
+                        arrCarElse.splice(i,1);
+                        arrBullet.splice(j,1);
+                        point+=10;
+                    }
+                }
+            }
+        };
+
+        this.deleteBullet=function (arrBullet) {
+            for (let i=0; i<arrBullet.length; i++) {
+                if (arrBullet[i].y <= 0) {
+                    arrBullet.splice(i,1);
+                }
+            }
+        };
+
+        this.setGameOver=function(arrCarElse){
+            for(let i=0; i<arrCarElse.length; i++){
+                if (car.x < arrCarElse[i].x + 60 && car.y < arrCarElse[i].y + 150 &&
+                    car.x > arrCarElse[i].x - 60 && car.y > arrCarElse[i].y - 150) {
+                    ctx.font = "100px Georgia";
+                    ctx.fillText("You lose",120,300);
+                    clearInterval(makeCarElse);
+                    clearInterval(start);
+                    break;
+                }
+            }
+        };
+
+        this.reset=function () {
+            arrCarElse=[];
+            arrBullet=[];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            clearInterval(makeCarElse);
+            clearInterval(start);
+            x=[];
+            count=0;
+            point=0;
+            makeCarElse = undefined;
+        }
+    };
+    let myGame=new Game();
+
+    let startNewGame=function(){
+        createCarElse();
+        start= setInterval(function () {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            car.getCarElement();
+            car.getDirection();
+            myGame.challenges();
+            myGame.setGameOver(arrCarElse);
+            myGame.deleteCarElse(arrCarElse,arrBullet);
+            myGame.deleteBullet(arrBullet);
+            document.getElementById("score").innerHTML = count+point;
+        }, 10);
+    };
+    startNewGame();
+
+    function reset() {
+        myGame.reset();
+    }
+    function play() {
+        startNewGame();
+    }
+
+    function moveSelection(e) {
+        switch (e.keyCode) {
+            case 70:
+                car.createBullet();
+                break;
+            case 37:
+                car.direction= "Left";
+                break;
+            case 39:
+                car.direction= "Right";
+                break;
+            // case 38:
+            //     car.direction= "Up";
+            //     break;
+            // case 40:
+            //     car.direction= "Down";
+            //     break;
+        }
+        console.log(car.direction);
+        console.log(arrBullet);
+    }
+
+    function docReady() {
+        window.addEventListener("keydown", moveSelection);
+    }
+
+
+</script>
+</body>
+</html>
